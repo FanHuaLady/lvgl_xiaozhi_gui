@@ -8,6 +8,7 @@
 
 #include "gui_app/common/lv_lib.h"
 #include "gui_app/ui.h"
+#include "gui_app/inter_process_comms.h"
 
 static const char *getenv_default(const char *name, const char *dflt)
 {
@@ -68,6 +69,11 @@ int main(void)
     /*Create a Demo*/
     // lv_demo_widgets();
     // lv_demo_widgets_start_slideshow();
+
+    const char *ipc_port_env = getenv("GUI_IPC_PORT");
+    int ipc_port = ipc_port_env ? atoi(ipc_port_env) : 8082;
+    ipc_init(ipc_port);
+
     ui_init();
     /*Handle LVGL tasks*/
     while(1) {

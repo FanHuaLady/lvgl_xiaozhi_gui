@@ -1,5 +1,6 @@
 #include "ui_ChatBotPage.h"
 #include "app_ChatBotPage.h"
+#include "../../inter_process_comms.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -13,10 +14,12 @@ lv_obj_t * ui_EyeLeft;
 lv_obj_t * ui_MouthPanel;
 lv_obj_t * ui_Mouth;
 lv_obj_t * ui_LabelInfo;
+lv_obj_t * ui_SubtitleLabel;
 lv_timer_t * ui_ChatBot_timer;
 lv_timer_t * ui_ChatBot_move_timer;
 
 #define CHAT_BOT_UI_TEST 0
+#define UI_CHAT_SUBTITLE_BUFFER_SIZE 256
 
 struct ui_chat_para_t{
     bool first_enter;
@@ -29,8 +32,47 @@ struct ui_chat_para_t ui_chat_para = {
     .first_enter = 0,
     .anim_complete = true,
     .idle_random_anim_index = 1,
-    .last_state = -1,
+    .last_state = UI_STATE_UNKNOWN,
 };
+
+static void ui_update_status_label(int state)
+{
+    const char *status_text = NULL;
+    bool hide_label = false;
+
+    switch (state) {
+        case UI_STATE_IDLE:
+        case UI_STATE_LISTENING:
+        case UI_STATE_THINKING:
+        case UI_STATE_SPEAKING:
+            hide_label = true;
+            break;
+        case UI_STATE_ERROR:
+            status_text = "System Error";
+            break;
+        case 0:
+            status_text = "Fault";
+            break;
+        case 1:
+            status_text = "Starting ...";
+            break;
+        case 2:
+            status_text = "Stopped";
+            break;
+        case UI_STATE_UNKNOWN:
+        default:
+            status_text = "Waiting for Core ...";
+            break;
+    }
+
+    if (hide_label) {
+        lv_obj_add_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+
+    lv_obj_remove_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
+    lv_label_set_text(ui_LabelInfo, status_text ? status_text : "");
+}
 
 ///////////////////// FUNCTIONS ////////////////////
 
@@ -229,97 +271,69 @@ static void ui_event_ChatBotPage(lv_event_t * e)
     }
 }
 
-static int ui_ai_chat_app_init(void)
-{
-    if(!CHAT_BOT_UI_TEST) 
-    {
-        int errno = start_ai_chat(ui_system_para.aichat_app_info.addr, ui_system_para.aichat_app_info.port, ui_system_para.aichat_app_info.token, ui_system_para.aichat_app_info.device_id, ui_system_para.aichat_app_info.aliyun_api_key, ui_system_para.aichat_app_info.protocol_version, ui_system_para.aichat_app_info.sample_rate, ui_system_para.aichat_app_info.channels, ui_system_para.aichat_app_info.frame_duration);
-        if(errno)
-        {
-            // show msg box
-            ui_msgbox_info("Error", "AIChat App init failed, wait for a moment and try again.");
-            return -1;
-        }
-    }
-    return 0;
-}
-
 static void _ChatBotTimer_cb(void)
 {
     if(ui_chat_para.first_enter)
     {
         ui_chat_para.first_enter = false;
-        // start AI Chat
-        if(ui_ai_chat_app_init())
-        {
-            lv_lib_pm_OpenPrePage(&page_manager);
-        }
     }
-    
-    // 0-fault, 1-startup, 2-stop, 3-idle, 4-listening, 5-thinking, 6-speaking
-    int state;
-    if(!CHAT_BOT_UI_TEST) 
-        state = get_ai_chat_state();
-    else
-        state = 3;
-    
+
+    char message_buffer[UI_CHAT_SUBTITLE_BUFFER_SIZE];
+    if (ipc_get_latest_message(message_buffer, sizeof(message_buffer)))
+    {
+        lv_label_set_text(ui_SubtitleLabel, message_buffer);
+    }
+
+    int state = ipc_get_state();
+    ui_update_status_label(state);
+
     if(state != ui_chat_para.last_state)
     {
         ui_chat_para.last_state = state;
         ui_chat_para.anim_complete = true;
         ui_ChatBotPage_Objs_reinit();
     }
-    if(state == -1 || state == 2)
+
+    if(state == UI_STATE_ERROR)
     {
-        // show msg box
-        ui_msgbox_info("Error", "AIChat App Not exist.");
-        lv_lib_pm_OpenPrePage(&page_manager);
+        lv_label_set_text(ui_SubtitleLabel, "System Error / Network Disconnected");
+        return;
     }
-    else if(state==0)
+
+    if(state == UI_STATE_UNKNOWN)
     {
-        lv_obj_remove_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelInfo, "Fault");
+        return;
     }
-    else if(state==1)
+
+    if(!ui_chat_para.anim_complete)
     {
-        lv_obj_remove_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelInfo, "Starting ...");
+        return;
     }
-    else
+
+    if(state == UI_STATE_IDLE)
     {
-        lv_obj_add_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
-        if(ui_chat_para.anim_complete)
+        if(ui_chat_para.idle_random_anim_index == 1)
         {
-            // idle
-            if(state == 3)
-            {
-                if(ui_chat_para.idle_random_anim_index == 1)
-                {
-                    _IdleMove1_Animation();
-                    ui_chat_para.idle_random_anim_index += 1;
-                }
-                else if(ui_chat_para.idle_random_anim_index == 2)
-                {
-                    _IdleMove2_Animation();
-                    ui_chat_para.idle_random_anim_index = 1;
-                }  
-            }
-            // listening
-            else if(state == 4)
-            {
-                _ListenMove_Animation();
-            }
-            //thinking
-            else if(state == 5)
-            {
-                _ThinkingMove_Animation();
-            }
-            // speaking
-            else if(state == 6)
-            {
-                _SpeakMove_Animation();
-            }
+            _IdleMove1_Animation();
+            ui_chat_para.idle_random_anim_index = 2;
         }
+        else
+        {
+            _IdleMove2_Animation();
+            ui_chat_para.idle_random_anim_index = 1;
+        }
+    }
+    else if(state == UI_STATE_LISTENING)
+    {
+        _ListenMove_Animation();
+    }
+    else if(state == UI_STATE_THINKING)
+    {
+        _ThinkingMove_Animation();
+    }
+    else if(state == UI_STATE_SPEAKING)
+    {
+        _SpeakMove_Animation();
     }
 }
 
@@ -444,16 +458,29 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_x(ui_LabelInfo, 0);
     lv_obj_set_y(ui_LabelInfo, 10);
     lv_obj_set_align(ui_LabelInfo, LV_ALIGN_TOP_MID);
-    lv_label_set_text(ui_LabelInfo, "Wait connect ...");
+    lv_label_set_text(ui_LabelInfo, "");
     lv_obj_set_style_text_color(ui_LabelInfo, lv_color_hex(0x808080), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LabelInfo, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_LabelInfo, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_add_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);     /// Flags
+
+    ui_SubtitleLabel = lv_label_create(ui_ChatBotPage);
+    lv_obj_set_width(ui_SubtitleLabel, 300);
+    lv_obj_set_height(ui_SubtitleLabel, LV_SIZE_CONTENT);
+    lv_obj_set_x(ui_SubtitleLabel, 0);
+    lv_obj_set_y(ui_SubtitleLabel, -12);
+    lv_obj_set_align(ui_SubtitleLabel, LV_ALIGN_BOTTOM_MID);
+    lv_label_set_long_mode(ui_SubtitleLabel, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(ui_SubtitleLabel, "");
+    lv_obj_set_style_text_font(ui_SubtitleLabel, &ui_font_heiti14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_SubtitleLabel, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(ui_SubtitleLabel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_ChatBotPage, ui_event_ChatBotPage, LV_EVENT_ALL, NULL);
 
     ui_ChatBot_timer = lv_timer_create(_ChatBotTimer_cb, 250, NULL);
     ui_ChatBot_move_timer = lv_timer_create(_ChatBotMoveTimer_cb, 500, NULL);
+
+    ui_update_status_label(UI_STATE_UNKNOWN);
 
     // load page
     lv_scr_load_anim(ui_ChatBotPage, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 100, 0, true);

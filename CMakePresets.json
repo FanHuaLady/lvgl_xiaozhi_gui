@@ -1,0 +1,46 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+      }
+    },
+    {
+      "name": "Debug",
+      "displayName": "ARM Debug Build (Cross-compile)",
+      "description": "Debug build for ARM target with cross-compilation",
+      "inherits": "default",
+      "toolchainFile": "${sourceDir}/toolchain-luckfox-pico.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "Release",
+      "displayName": "ARM Release Build (Cross-compile)",
+      "description": "Release build for ARM target with cross-compilation",
+      "inherits": "default",
+      "toolchainFile": "${sourceDir}/toolchain-luckfox-pico.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "Debug",
+      "jobs": 4
+    },
+    {
+      "name": "Release",
+      "configurePreset": "Release",
+      "jobs": 4
+    }
+  ]
+}
