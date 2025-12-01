@@ -7,16 +7,10 @@ extern "C" {
 
 #include "../lvgl/lvgl.h"
 #include "./common/lv_lib.h"
-#include "../common/sys_manager/sys_manager.h"
 #include "../common/gpio_manager/gpio_manager.h"
 
 #define UI_SCREEN_WIDTH 320
 #define UI_SCREEN_HEIGHT 240
-
-typedef system_para_t ui_system_para_t;
-
-// extern variables
-extern ui_system_para_t ui_system_para;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_question60_png);    // assets/question60.png

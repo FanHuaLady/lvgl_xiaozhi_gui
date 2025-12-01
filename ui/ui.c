@@ -1,10 +1,6 @@
-#include <string.h>
-
 #include "ui.h"
 #include "./pages/ui_ChatBotPage/ui_ChatBotPage.h"
 ///////////////////// VARIABLES ////////////////////
-
-ui_system_para_t ui_system_para;
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 
@@ -39,80 +35,6 @@ void ui_msgbox_info(const char * title, const char * text)
     lv_obj_add_event_cb(close_btn, msgbox_close_click_event_cb, LV_EVENT_PRESSED, &mbox_exist);
 }
 
-static void _sys_para_init(void)
-{
-    if(sys_load_system_parameters(sys_config_path, &ui_system_para)!=0)
-    {
-        LV_LOG_WARN("Load system parameters failed, create a new config file.");
-        ui_system_para.year = 2025;
-        ui_system_para.month = 1;
-        ui_system_para.day = 1;
-        ui_system_para.hour = 0;
-        ui_system_para.minute = 0;
-        ui_system_para.brightness = 50;
-        ui_system_para.sound = 50;
-        ui_system_para.wifi_connected = false;
-        ui_system_para.auto_time = true;
-        ui_system_para.auto_location = false;
-        strcpy(ui_system_para.location.city, "东城区");
-        strcpy(ui_system_para.location.adcode, "110101");
-        strcpy(ui_system_para.gaode_api_key, "your_amap_key");
-        strcpy(ui_system_para.aichat_app_info.addr, "172.32.0.100");
-        ui_system_para.aichat_app_info.port = 8765;
-        strcpy(ui_system_para.aichat_app_info.token, "123456");
-        strcpy(ui_system_para.aichat_app_info.device_id, "00:11:22:33:44:55");
-        strcpy(ui_system_para.aichat_app_info.aliyun_api_key, "your_aliyun_key");
-        ui_system_para.aichat_app_info.protocol_version = 1;
-        ui_system_para.aichat_app_info.sample_rate = 16000;
-        ui_system_para.aichat_app_info.channels = 1;
-        ui_system_para.aichat_app_info.frame_duration = 40;
-        // create a new config file and save
-        sys_save_system_parameters(sys_config_path, &ui_system_para);
-    }
-    // WIFI
-    ui_system_para.wifi_connected = sys_get_wifi_status();
-    // TIME
-    if(ui_system_para.auto_time == true)
-    {
-        if(sys_get_time_from_ntp("ntp.aliyun.com", &ui_system_para.year, &ui_system_para.month, &ui_system_para.day, &ui_system_para.hour, &ui_system_para.minute, NULL))
-        {
-            LV_LOG_WARN("Get time from NTP failed, use system time.");
-        }
-        else
-        {
-            sys_set_time(ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute, 0);
-            LV_LOG_USER("Auto NTP time year: %d, month: %d, day: %d, hour: %d, minute: %d", ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute);
-        }
-    }
-    else
-    {
-        sys_set_time(ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute, 0);
-        LV_LOG_USER("Manual time year: %d, month: %d, day: %d, hour: %d, minute: %d", ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute);
-    }
-    // LOCATION
-    if(ui_system_para.auto_location == true)
-    {
-        if(sys_get_auto_location_by_ip(&ui_system_para.location, ui_system_para.gaode_api_key) == 0)
-        {
-            LV_LOG_USER("Auto location city: %s, adcode: %s", ui_system_para.location.city, ui_system_para.location.adcode);
-        }
-        else
-        {
-            LV_LOG_WARN("Get location by IP failed, use system location.");
-            const char *city_name = sys_get_city_name_by_adcode(city_adcode_path, ui_system_para.location.adcode);
-            strcpy(ui_system_para.location.city, city_name);
-            LV_LOG_USER("Manual location city: %s, adcode: %s", ui_system_para.location.city, ui_system_para.location.adcode);
-        }
-    }
-    else
-    {
-        const char *city_name = sys_get_city_name_by_adcode(city_adcode_path, ui_system_para.location.adcode);
-        strcpy(ui_system_para.location.city, city_name);
-        LV_LOG_USER("Manual location city: %s, adcode: %s", ui_system_para.location.city, ui_system_para.location.adcode);
-    }
-    LV_LOG_USER("System para init done.");
-}
-
 static void _gpios_init(void)
 {
     // GPIO
@@ -135,47 +57,15 @@ static void _gpios_init(void)
 static void _maintimer_cb(lv_timer_t *timer)
 {
     (void)timer;
-    static uint16_t time_count2 = 299;
-    time_count2++;
-    // 每秒闪烁一次LED
-    if(time_count2 % 2 == 0)
-    {
-        gpio_set_value(LED_BLUE, 1);
-    }
-    else
-    {
-        gpio_set_value(LED_BLUE, 0);
-    }
-    // 每5分钟保存一次系统参数
-    if(time_count2 >= 300)
-    {
-        ui_system_para.wifi_connected = sys_get_wifi_status();
-        if(ui_system_para.auto_time == true)
-        {
-            if(sys_get_time_from_ntp("ntp.aliyun.com", &ui_system_para.year, &ui_system_para.month, &ui_system_para.day, &ui_system_para.hour, &ui_system_para.minute, NULL))
-            {
-                LV_LOG_WARN("Get time from NTP failed, use system time.");
-            }
-            else
-            {
-                sys_set_time(ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute, 0);
-                LV_LOG_USER("Auto NTP time year: %d, month: %d, day: %d, hour: %d, minute: %d", ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute);
-            }
-        }
-        else
-        {
-            sys_set_time(ui_system_para.year, ui_system_para.month, ui_system_para.day, ui_system_para.hour, ui_system_para.minute, 0);
-        }
-        sys_save_system_parameters(sys_config_path, &ui_system_para);
-        time_count2 = 0; 
-    }
+    static bool led_on;
+    led_on = !led_on;
+    gpio_set_value(LED_BLUE, led_on ? 1 : 0);
 }
 
 ///////////////////// SCREENS ////////////////////
 
 void ui_init(void)
 {
-    _sys_para_init();
     _gpios_init();
     lv_disp_t * dispp = lv_display_get_default();
     lv_theme_t * theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),

@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-#include "../../conf/dev_conf.h"
 #include <stdint.h>
 #include <stdbool.h>
 

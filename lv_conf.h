@@ -21,8 +21,20 @@
 #include "my_include.h"
 #endif
 
-#if 1
-    #include "conf/dev_conf.h"
+#ifndef LV_USE_SIMULATOR
+#define LV_USE_SIMULATOR 0
+#endif
+
+#ifndef LV_USE_SDL
+#define LV_USE_SDL 0
+#endif
+
+#ifndef LV_USE_LINUX_FBDEV
+#define LV_USE_LINUX_FBDEV 0
+#endif
+
+#ifndef LV_USE_EVDEV
+#define LV_USE_EVDEV 0
 #endif
 
 /*====================

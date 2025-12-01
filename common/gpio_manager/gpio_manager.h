@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-#include "../../conf/dev_conf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

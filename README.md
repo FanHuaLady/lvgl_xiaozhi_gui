@@ -3,41 +3,24 @@
 ### 1.编译
 1. **在电脑上运行SDL仿真**
 
-    注意更改conf/dev_conf, 将`LV_USE_SIMULATOR`置`1`
+    使用CMake Preset并开启`UI_USE_SIMULATOR`即可启用SDL后端：
     
     ```sh
-    cd ./DeskBot_demo
-    mkdir ./build
-    cd ./build
-    cmake ..
-    make
-    ```
-
-    然后就可以在ubuntu上运行了
-
-    ```sh
-    cd ../bin
-    ./main
+    cmake --preset Debug -DUI_USE_SIMULATOR=ON
+    cmake --build --preset Debug
+    ./build/Debug/main
     ```
 
 2. **编译到开发板上运行**
 
-    注意更改conf/dev_conf, 将`LV_USE_SIMULATOR`置`0`
+    默认关闭`UI_USE_SIMULATOR`即为真实硬件配置，可根据需要选择`Debug`或`Release`预设：
 
     ```sh
-    cd ./build
-    cmake .. -DTARGET_ARM=ON
-    make
+    cmake --preset Debug
+    cmake --build --preset Debug
     ```
 
-    然后把可执行文件所在的文件夹`/bin`, copy到开发板, 在开发板上就能运行了
-
-    **注意:** 
-
-    ```sh
-    cd ../bin
-    ./main
-    ```
+    将生成的`build/Debug`目录整体拷贝到开发板上，然后在该目录中执行`./main`即可运行。
 
 ### 2.Server运行
 
@@ -49,9 +32,9 @@ python ./main.py --access_token="123456"
 
 ### 3.注意
 
-**!! 使用前请先修改`./bin/system_para.conf`中的内容 !!**
+**!! 应用不再加载本地 system_para.conf / gaode_adcode.json，UI 数据完全通过 IPC 输入 !!**
 
-1. `./bin/system_para.conf`中有高德API key，需要换成你的API key，用于天气等数据的获取
+1. 只需保持 IPC 服务端运行，通过 `inter_process_comms` 发送 JSON 消息即可驱动界面，无需再拷贝或维护任何系统配置文件。
 
 2. 每个page可视为一个APP, 想要自行添加可以参考模版添加
 
