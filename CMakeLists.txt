@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 add_subdirectory(lvgl)          # LVGL 核心模块
-add_subdirectory(gui_app)       # GUI_APP ChatBot 应用模块
+add_subdirectory(ui)            # UI ChatBot 应用模块
 add_subdirectory(utils)         # 公共工具模块
 add_subdirectory(common)        # common
 
@@ -37,7 +37,7 @@ add_executable(main ${MAIN_SOURCES})
 # 链接自定义的文件夹库
 target_link_libraries(
     main 
-    gui_app
+    ui
     utils
     common
 )
@@ -73,29 +73,6 @@ add_custom_command(
             ${PROJECT_SOURCE_DIR}/utils/cacert.pem
             ${OUTPUT_PATH}/cacert.pem
     COMMENT "Copying cacert.pem to bin directory"
-)
-
-# Reference AIChat_demo library
-set(AI_CHAT_CLIENT_PATH "${PROJECT_SOURCE_DIR}/../AIChat_demo/Client" CACHE PATH "Path to AIChat_demo Client")
-add_subdirectory(${AI_CHAT_CLIENT_PATH} ${CMAKE_BINARY_DIR}/AIChat_build)
-target_link_libraries(main AIchat-c-interface AIChatCore)
-
-# Copy AIChat necessary resource files
-add_custom_command(
-    TARGET main POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}/third_party/snowboy/resources
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}/third_party/snowboy/resources/models
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}/third_party/audio
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${AI_CHAT_CLIENT_PATH}/third_party/snowboy/resources/common.res
-            ${OUTPUT_PATH}/third_party/snowboy/resources/common.res
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${AI_CHAT_CLIENT_PATH}/third_party/snowboy/resources/models/echo.pmdl
-            ${OUTPUT_PATH}/third_party/snowboy/resources/models/echo.pmdl
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${AI_CHAT_CLIENT_PATH}/third_party/audio/waked.pcm
-            ${OUTPUT_PATH}/third_party/audio/waked.pcm
-    COMMENT "Copying AIChat necessary resource files to executable output directory"
 )
 
 # Set output directory for executable

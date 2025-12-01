@@ -6,9 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "gui_app/common/lv_lib.h"
-#include "gui_app/ui.h"
-#include "gui_app/inter_process_comms.h"
+#include "ui/ui.h"
+#include "ui/inter_process_comms.h"
 
 static const char *getenv_default(const char *name, const char *dflt)
 {

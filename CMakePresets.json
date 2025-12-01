@@ -15,7 +15,7 @@
       "displayName": "ARM Debug Build (Cross-compile)",
       "description": "Debug build for ARM target with cross-compilation",
       "inherits": "default",
-      "toolchainFile": "${sourceDir}/toolchain-luckfox-pico.cmake",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-luckfox-pico.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -25,7 +25,7 @@
       "displayName": "ARM Release Build (Cross-compile)",
       "description": "Release build for ARM target with cross-compilation",
       "inherits": "default",
-      "toolchainFile": "${sourceDir}/toolchain-luckfox-pico.cmake",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-luckfox-pico.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }

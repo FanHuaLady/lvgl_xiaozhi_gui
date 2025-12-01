@@ -1,5 +1,4 @@
 #include "ui_ChatBotPage.h"
-#include "app_ChatBotPage.h"
 #include "../../inter_process_comms.h"
 
 ///////////////////// VARIABLES ////////////////////
@@ -16,9 +15,7 @@ lv_obj_t * ui_Mouth;
 lv_obj_t * ui_LabelInfo;
 lv_obj_t * ui_SubtitleLabel;
 lv_timer_t * ui_ChatBot_timer;
-lv_timer_t * ui_ChatBot_move_timer;
 
-#define CHAT_BOT_UI_TEST 0
 #define UI_CHAT_SUBTITLE_BUFFER_SIZE 256
 
 struct ui_chat_para_t{
@@ -121,8 +118,9 @@ static void ui_ChatBotPage_Objs_reinit(void)
 
 ///////////////////// ANIMATIONS ////////////////////
 
-static void _anim_complete_cb(void)
+static void _anim_complete_cb(lv_anim_t *anim)
 {
+    LV_UNUSED(anim);
     ui_chat_para.anim_complete = true;
 }
 
@@ -265,14 +263,12 @@ static void ui_event_ChatBotPage(lv_event_t * e)
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT) {
         lv_indev_wait_release(lv_indev_active());
         ui_ChatBotPage_Objs_reinit();
-        if(!CHAT_BOT_UI_TEST)
-            stop_ai_chat();
-        lv_lib_pm_OpenPrePage(&page_manager);
     }
 }
 
-static void _ChatBotTimer_cb(void)
+static void _ChatBotTimer_cb(lv_timer_t *timer)
 {
+    (void)timer;
     if(ui_chat_para.first_enter)
     {
         ui_chat_para.first_enter = false;
@@ -335,12 +331,6 @@ static void _ChatBotTimer_cb(void)
     {
         _SpeakMove_Animation();
     }
-}
-
-static void _ChatBotMoveTimer_cb(void)
-{
-    if(!CHAT_BOT_UI_TEST)
-        chat_bot_get_intent_process();
 }
 
 ///////////////////// SCREEN init ////////////////////
@@ -478,7 +468,6 @@ void ui_ChatBotPage_init(void)
     lv_obj_add_event_cb(ui_ChatBotPage, ui_event_ChatBotPage, LV_EVENT_ALL, NULL);
 
     ui_ChatBot_timer = lv_timer_create(_ChatBotTimer_cb, 250, NULL);
-    ui_ChatBot_move_timer = lv_timer_create(_ChatBotMoveTimer_cb, 500, NULL);
 
     ui_update_status_label(UI_STATE_UNKNOWN);
 
@@ -494,10 +483,6 @@ void ui_ChatBotPage_deinit(void)
     if(ui_ChatBot_timer)
     {
         lv_timer_delete(ui_ChatBot_timer);
-    }    
-     if(ui_ChatBot_move_timer)
-    {
-        lv_timer_delete(ui_ChatBot_move_timer);
     }
     ui_chat_para.anim_complete = true;
     return;

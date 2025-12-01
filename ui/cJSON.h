@@ -1,5 +1,5 @@
-#ifndef GUI_APP_CJSON_H
-#define GUI_APP_CJSON_H
+#ifndef UI_CJSON_H
+#define UI_CJSON_H
 
 #include <stdbool.h>
 #include <json-c/json.h>
@@ -43,4 +43,4 @@ int cJSON_IsArray(const cJSON *item);
 }
 #endif
 
-#endif /* GUI_APP_CJSON_H */
+#endif /* UI_CJSON_H */

@@ -16,7 +16,6 @@ extern "C" {
 typedef system_para_t ui_system_para_t;
 
 // extern variables
-extern lv_lib_pm_t page_manager;
 extern ui_system_para_t ui_system_para;
 
 // IMAGES AND IMAGE SETS
@@ -27,9 +26,6 @@ LV_IMG_DECLARE(ui_img_hand60_png);    // assets/hand60.png
 // FONTS
 LV_FONT_DECLARE(ui_font_heiti14);
 LV_FONT_DECLARE(ui_font_heiti22);
-
-// ui apps data
-typedef lv_lib_pm_page_t ui_app_data_t;
 
 // UI INIT
 void ui_init(void);

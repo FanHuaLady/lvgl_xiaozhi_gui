@@ -7,14 +7,6 @@ extern "C" {
 
 #include "lv_lib_conf.h"
 
-#if LV_USE_LIB_STACK
-#include "stack/lv_lib_stack.h"
-#endif
-
-#if LV_USE_LIB_PAGE_MANAGER
-#include "page_manager/lv_lib_pm.h"
-#endif
-
 #if LV_USE_LIB_ANIMATION
 #include "animation/lv_lib_animation.h"
 #endif

@@ -1,5 +1,5 @@
-#ifndef GUI_APP_INTER_PROCESS_COMMS_H
-#define GUI_APP_INTER_PROCESS_COMMS_H
+#ifndef UI_INTER_PROCESS_COMMS_H
+#define UI_INTER_PROCESS_COMMS_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef enum {
-    UI_STATE_UNKNOWN = 0,
+    UI_STATE_UNKNOWN = -1,
     UI_STATE_IDLE = 3,
     UI_STATE_LISTENING = 4,
     UI_STATE_THINKING = 5,
@@ -25,4 +25,4 @@ bool ipc_get_latest_message(char *buffer, size_t len);
 }
 #endif
 
-#endif /* GUI_APP_INTER_PROCESS_COMMS_H */
+#endif /* UI_INTER_PROCESS_COMMS_H */

@@ -1,9 +1,8 @@
+#include <string.h>
+
 #include "ui.h"
-#include "./pages/ui_HomePage/ui_HomePage.h"
 #include "./pages/ui_ChatBotPage/ui_ChatBotPage.h"
 ///////////////////// VARIABLES ////////////////////
-
-lv_lib_pm_t page_manager;
 
 ui_system_para_t ui_system_para;
 
@@ -12,27 +11,6 @@ ui_system_para_t ui_system_para;
 #if LV_COLOR_DEPTH != 16
     #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
 #endif
-
-///////////////////// all apps ////////////////////
-
-#define _APP_NUMS 2 // number of apps (HomePage + ChatBotPage)
-
-ui_app_data_t ui_apps[_APP_NUMS] = 
-{
-    {
-        .name = "HomePage",
-        .init = ui_HomePage_init,
-        .deinit = ui_HomePage_deinit,
-        .page_obj = NULL
-    },
-    {
-        .name = "ChatBotPage",
-        .init = ui_ChatBotPage_init,
-        .deinit = ui_ChatBotPage_deinit,
-        .page_obj = NULL
-    }
-
-};
 
 ///////////////////// Function ////////////////////
 
@@ -154,8 +132,9 @@ static void _gpios_init(void)
 ///////////////////// timer //////////////////////
 
 // 1s timer
-void _maintimer_cb(void)
+static void _maintimer_cb(lv_timer_t *timer)
 {
+    (void)timer;
     static uint16_t time_count2 = 299;
     time_count2++;
     // 每秒闪烁一次LED
@@ -203,12 +182,6 @@ void ui_init(void)
                                                true, LV_FONT_DEFAULT);
     lv_disp_set_theme(dispp, theme);
 
-    lv_lib_pm_Init(&page_manager);
-    lv_lib_pm_page_t *pm_page[_APP_NUMS];
-    for(int i = 0; i < _APP_NUMS; i++)
-    {
-        pm_page[i] = lv_lib_pm_CreatePage(&page_manager, ui_apps[i].name, ui_apps[i].init, ui_apps[i].deinit, NULL);
-    }
-    lv_lib_pm_OpenPage(&page_manager, NULL, "ChatBotPage");
+    ui_ChatBotPage_init();
     lv_timer_create(_maintimer_cb, 1000, NULL);
 }
