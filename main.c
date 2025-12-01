@@ -70,7 +70,7 @@ int main(void)
     // lv_demo_widgets_start_slideshow();
 
     const char *ipc_port_env = getenv("GUI_IPC_PORT");
-    int ipc_port = ipc_port_env ? atoi(ipc_port_env) : 8082;
+    int ipc_port = ipc_port_env ? atoi(ipc_port_env) : 5679;
     ipc_init(ipc_port);
 
     ui_init();

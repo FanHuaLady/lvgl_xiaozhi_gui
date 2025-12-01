@@ -449,7 +449,7 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_y(ui_LabelInfo, 10);
     lv_obj_set_align(ui_LabelInfo, LV_ALIGN_TOP_MID);
     lv_label_set_text(ui_LabelInfo, "");
-    lv_obj_set_style_text_color(ui_LabelInfo, lv_color_hex(0x808080), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui_LabelInfo, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LabelInfo, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_LabelInfo, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -463,7 +463,7 @@ void ui_ChatBotPage_init(void)
     lv_label_set_text(ui_SubtitleLabel, "");
     lv_obj_set_style_text_font(ui_SubtitleLabel, &ui_font_heiti14, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_SubtitleLabel, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_color(ui_SubtitleLabel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui_SubtitleLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_ChatBotPage, ui_event_ChatBotPage, LV_EVENT_ALL, NULL);
 
