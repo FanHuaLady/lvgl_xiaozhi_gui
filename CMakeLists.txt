@@ -58,7 +58,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/lvgl/tests/FindLibDRM.cmake)
 include_directories(${Libdrm_INCLUDE_DIRS})
 
 # Link libraries (DRM driver for display)
-target_link_libraries(${PROJECT_NAME} lvgl lvgl::examples lvgl::demos lvgl::thorvg ${Libdrm_LIBRARIES} m pthread)
+target_link_libraries(${PROJECT_NAME} lvgl lvgl::examples lvgl::demos lvgl::thorvg ${Libdrm_LIBRARIES} m pthread freetype)
 
 # Custom command to clean up generated files
 if(NOT TARGET clean-all)
