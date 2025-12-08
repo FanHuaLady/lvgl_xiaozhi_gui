@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "./pages/ui_ChatBotPage/ui_ChatBotPage.h"
+#include "./fonts/freetype_fonts.h"
 ///////////////////// VARIABLES ////////////////////
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
@@ -67,9 +68,13 @@ static void _maintimer_cb(lv_timer_t *timer)
 void ui_init(void)
 {
     _gpios_init();
+    
+    // 初始化 FreeType 字体系统
+    freetype_fonts_init();
+    
     lv_disp_t * dispp = lv_display_get_default();
     lv_theme_t * theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
-                                               true, LV_FONT_DEFAULT);
+                                               true, get_font_sourcehansans(16));
     lv_disp_set_theme(dispp, theme);
 
     ui_ChatBotPage_init();

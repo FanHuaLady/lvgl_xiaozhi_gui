@@ -1,5 +1,6 @@
 #include "ui_ChatBotPage.h"
 #include "../../inter_process_comms.h"
+#include "../../fonts/freetype_fonts.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -451,7 +452,7 @@ void ui_ChatBotPage_init(void)
     lv_label_set_text(ui_LabelInfo, "");
     lv_obj_set_style_text_color(ui_LabelInfo, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LabelInfo, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_LabelInfo, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LabelInfo, get_font_sourcehansans(20), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_SubtitleLabel = lv_label_create(ui_ChatBotPage);
     lv_obj_set_width(ui_SubtitleLabel, 300);
@@ -461,7 +462,7 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_align(ui_SubtitleLabel, LV_ALIGN_BOTTOM_MID);
     lv_label_set_long_mode(ui_SubtitleLabel, LV_LABEL_LONG_WRAP);
     lv_label_set_text(ui_SubtitleLabel, "");
-    lv_obj_set_style_text_font(ui_SubtitleLabel, &ui_font_heiti14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_SubtitleLabel, get_font_sourcehansans(14), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_SubtitleLabel, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_color(ui_SubtitleLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
 
