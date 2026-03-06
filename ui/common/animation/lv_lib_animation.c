@@ -1,35 +1,42 @@
 #include "lv_lib_animation.h"
 
+// 设置对象的 X 坐标
 void lv_lib_anim_callback_set_x(void * var, int32_t v)
 {
     lv_obj_set_x(var, v);
 }
 
+// 设置对象的 Y 坐标
 void lv_lib_anim_callback_set_y(void * var, int32_t v)
 {
     lv_obj_set_y(var, v);
 }
 
+// 设置对象的高度
 void lv_lib_anim_callback_set_hight(void * var, int32_t v)
 {
     lv_obj_set_height(var, v);
 }
 
+// 设置对象的宽度
 void lv_lib_anim_callback_set_width(void * var, int32_t v)
 {
     lv_obj_set_width(var, v);
 }
 
+// 设置对象的旋转角度
 void lv_lib_anim_callback_set_image_angle(void * var, int32_t v)
 {
     lv_image_set_rotation(var, v);
 }
 
+// 设置对象的缩放比例
 void lv_lib_anim_callback_set_scale(void * var, int32_t v)
 {
     lv_image_set_scale(var, v);
 }
 
+// 设置对象的透明度
 void lv_lib_anim_callback_set_opacity(void * var, int32_t v)
 {
     lv_obj_set_style_opa(var, v, LV_PART_MAIN | LV_STATE_DEFAULT);

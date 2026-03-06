@@ -1,15 +1,10 @@
 #include "ui.h"
 #include "./pages/ui_ChatBotPage/ui_ChatBotPage.h"
 #include "./fonts/freetype_fonts.h"
-///////////////////// VARIABLES ////////////////////
-
-///////////////////// TEST LVGL SETTINGS ////////////////////
 
 #if LV_COLOR_DEPTH != 16
     #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
 #endif
-
-///////////////////// Function ////////////////////
 
 static void msgbox_close_click_event_cb(lv_event_t * e)
 {
@@ -52,8 +47,6 @@ static void _gpios_init(void)
     gpio_set_value(MOTOR2_INB, 0);
 }
 
-///////////////////// timer //////////////////////
-
 // 1s timer
 static void _maintimer_cb(lv_timer_t *timer)
 {
@@ -62,8 +55,6 @@ static void _maintimer_cb(lv_timer_t *timer)
     led_on = !led_on;
     gpio_set_value(LED_BLUE, led_on ? 1 : 0);
 }
-
-///////////////////// SCREENS ////////////////////
 
 void ui_init(void)
 {
