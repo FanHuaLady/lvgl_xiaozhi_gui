@@ -2,7 +2,8 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(SDK_PATH "/project/SDK/rv1106-sdk")
+# 修改为您的实际 SDK 路径
+set(SDK_PATH "/home/flower/Echo-Mate/SDK/rv1106-sdk")
 
 # Specify the compiler paths
 set(CMAKE_C_COMPILER ${SDK_PATH}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc)
@@ -20,4 +21,3 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 # 包含sysroot中freetype的头文件
 include_directories(${CMAKE_SYSROOT}/usr/include/freetype2)
-

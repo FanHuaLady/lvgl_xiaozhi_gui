@@ -63,7 +63,8 @@ static void ui_update_status_label(int state)
             break;
     }
 
-    if (hide_label) {
+    if (hide_label) 
+    {
         lv_obj_add_flag(ui_LabelInfo, LV_OBJ_FLAG_HIDDEN);
         return;
     }

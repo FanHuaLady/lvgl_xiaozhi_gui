@@ -47,7 +47,7 @@ static void lv_linux_disp_init(void)
     lv_sdl_window_create(width, height);
 }
 
-static void lv_linux_indev_init(void)
+static void lv_linux_indev_init(void)ls -la | grep -i cmakeuser
 {
     lv_sdl_mouse_create();
 }
@@ -69,13 +69,14 @@ int main(void)
     // lv_demo_widgets();
     // lv_demo_widgets_start_slideshow();
 
-    const char *ipc_port_env = getenv("GUI_IPC_PORT");
-    int ipc_port = ipc_port_env ? atoi(ipc_port_env) : 5679;
+    const char *ipc_port_env = getenv("GUI_IPC_PORT");              // 从环境变量中获取 IPC 端口号
+    int ipc_port = ipc_port_env ? atoi(ipc_port_env) : 5679;        // 如果环境变量不存在，则默认端口 5679
     ipc_init(ipc_port);
 
     ui_init();
     /*Handle LVGL tasks*/
-    while(1) {
+    while(1) 
+    {
         lv_timer_handler();
         usleep(1000);
     }
