@@ -15,6 +15,8 @@ lv_obj_t * ui_LabelInfo;
 lv_obj_t * ui_SubtitleLabel;
 lv_timer_t * ui_ChatBot_timer;
 
+lv_obj_t * ui_ShyMark;  // 新增害羞标记
+
 #define UI_CHAT_SUBTITLE_BUFFER_SIZE 256
 
 struct ui_chat_para_t{
@@ -24,6 +26,7 @@ struct ui_chat_para_t{
     int last_state;
 
     bool touch_active;
+    bool pet_mode;
 };
 
 struct ui_chat_para_t ui_chat_para = {
@@ -33,6 +36,7 @@ struct ui_chat_para_t ui_chat_para = {
     .last_state = UI_STATE_UNKNOWN,
 
     .touch_active = false,
+    .pet_mode = false,
 };
 
 static void ui_update_status_label(int state)
@@ -118,6 +122,8 @@ static void ui_ChatBotPage_Objs_reinit(void)
     lv_obj_set_style_opa(ui_thinkImg, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_set_style_opa(ui_HandImg, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_flag(ui_ShyMark, LV_OBJ_FLAG_HIDDEN);
 }
 
 ///////////////////// ANIMATIONS ////////////////////
@@ -285,6 +291,18 @@ static void _SpeakMove_Animation(void)
 
 }
 
+static void update_eyes_by_touch_x_only(lv_point_t point)
+{
+    lv_coord_t screen_w = lv_disp_get_hor_res(NULL);
+    float rel_x = (point.x - screen_w / 2.0f) / (screen_w / 2.0f);
+    if (rel_x < -1.0f) rel_x = -1.0f;
+    if (rel_x > 1.0f) rel_x = 1.0f;
+    const int max_offset_x = 40;
+    int offset_x = (int)(rel_x * max_offset_x);
+    // 只设置 x，不改变 y（y 已经在 PRESSED 中设置了固定值）
+    lv_obj_set_x(ui_EyesVerMovePanel, offset_x);
+}
+
 // 触摸屏交互
 static void ui_event_ChatBotPage(lv_event_t * e)
 {
@@ -292,20 +310,50 @@ static void ui_event_ChatBotPage(lv_event_t * e)
 
     if (event_code == LV_EVENT_PRESSED) 
     {
-        lv_anim_delete_all();                                           // 触摸开始：复位所有动画，启动触摸模式
-        ui_ChatBotPage_Objs_reinit();                                   // 让眼睛回到默认位置，准备跟随
-        ui_chat_para.touch_active = true;                               // 进入触摸状态
-
-        lv_point_t point;                                               // 立即根据当前触摸点更新一次位置
+        lv_point_t point;
         lv_indev_get_point(lv_indev_active(), &point);
-        update_eyes_by_touch(point);                                    // 触摸使眼睛跟随手指移动
+        lv_coord_t screen_h = lv_disp_get_ver_res(NULL);
+        
+        bool is_pet_zone = (point.y < screen_h / 3);
+
+        lv_anim_delete_all();
+        ui_chat_para.touch_active = true;
+
+        if (is_pet_zone) 
+        {
+            ui_chat_para.pet_mode = true;
+            // 眼睛变形
+            lv_obj_set_width(ui_EyeRight, 80);
+            lv_obj_set_height(ui_EyeRight, 40);
+            lv_obj_set_width(ui_EyeLeft, 80);
+            lv_obj_set_height(ui_EyeLeft, 40);
+            // 下移面板
+            lv_obj_set_y(ui_EyesVerMovePanel, 30);
+            // 显示害羞标记
+            lv_obj_remove_flag(ui_ShyMark, LV_OBJ_FLAG_HIDDEN);
+            // 水平跟随
+            update_eyes_by_touch_x_only(point);
+        } 
+        else 
+        {
+            ui_chat_para.pet_mode = false;
+            ui_ChatBotPage_Objs_reinit();   // 重置（也会隐藏害羞标记）
+            update_eyes_by_touch(point);
+        }
     }
     else if (event_code == LV_EVENT_PRESSING) 
     {
-        if (ui_chat_para.touch_active) 
+        if (!ui_chat_para.touch_active) return;
+        lv_point_t point;
+        lv_indev_get_point(lv_indev_active(), &point);
+        
+        if (ui_chat_para.pet_mode) 
         {
-            lv_point_t point;
-            lv_indev_get_point(lv_indev_active(), &point);
+            update_eyes_by_touch_x_only(point);
+            // 害羞标记作为子对象自动跟随，无需额外代码
+        } 
+        else 
+        {
             update_eyes_by_touch(point);
         }
     }
@@ -313,8 +361,9 @@ static void ui_event_ChatBotPage(lv_event_t * e)
     {
         if (ui_chat_para.touch_active) 
         {
+            ui_ChatBotPage_Objs_reinit();   // 恢复所有对象（包括隐藏害羞标记）
             ui_chat_para.touch_active = false;
-            ui_ChatBotPage_Objs_reinit();
+            ui_chat_para.pet_mode = false;
         }
     }
 }
@@ -400,8 +449,8 @@ void ui_ChatBotPage_init(void)
     ui_EyesPanel = lv_obj_create(ui_ChatBotPage);                       
     lv_obj_add_flag(ui_EyesPanel, LV_OBJ_FLAG_OVERFLOW_VISIBLE);        // 解决眼睛移动时被遮挡的问题
 
-    lv_obj_set_width(ui_EyesPanel, 210);
-    lv_obj_set_height(ui_EyesPanel, 80);
+    lv_obj_set_width(ui_EyesPanel, 300);
+    lv_obj_set_height(ui_EyesPanel, 120);
     lv_obj_set_x(ui_EyesPanel, 0);
     lv_obj_set_y(ui_EyesPanel, -25);
     lv_obj_set_align(ui_EyesPanel, LV_ALIGN_CENTER);
@@ -413,10 +462,10 @@ void ui_ChatBotPage_init(void)
     ui_EyesVerMovePanel = lv_obj_create(ui_EyesPanel);                 // 解决眼睛移动时被遮挡的问题
     lv_obj_add_flag(ui_EyesVerMovePanel, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
-    lv_obj_set_width(ui_EyesVerMovePanel, 210);
-    lv_obj_set_height(ui_EyesVerMovePanel, 80);
+    lv_obj_set_width(ui_EyesVerMovePanel, 300);
+    lv_obj_set_height(ui_EyesVerMovePanel, 120);
     lv_obj_set_align(ui_EyesVerMovePanel, LV_ALIGN_CENTER);
-    lv_obj_remove_flag(ui_EyesVerMovePanel, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);      /// Flags
+    lv_obj_remove_flag(ui_EyesVerMovePanel, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_color(ui_EyesVerMovePanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_EyesVerMovePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_EyesVerMovePanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -428,8 +477,8 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_x(ui_EyeRight, 60);
     lv_obj_set_y(ui_EyeRight, 0);
     lv_obj_set_align(ui_EyeRight, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_EyeRight, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
-    lv_obj_remove_flag(ui_EyeRight, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_add_flag(ui_EyeRight, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
+    lv_obj_remove_flag(ui_EyeRight, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_radius(ui_EyeRight, 80, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_EyeRight, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_EyeRight, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -446,13 +495,22 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_style_bg_color(ui_EyeLeft, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_EyeLeft, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_ShyMark = lv_label_create(ui_EyesVerMovePanel);
+    lv_label_set_text(ui_ShyMark, "/////                    /////");
+    lv_obj_set_style_text_color(ui_ShyMark, lv_color_hex(0xFF69B4), LV_PART_MAIN);      // 粉红色
+    lv_obj_set_style_text_font(ui_ShyMark, get_font_sourcehansans(20), LV_PART_MAIN);   // 字体大小
+    lv_obj_center(ui_ShyMark);                                                          // 先居中
+    lv_obj_set_y(ui_ShyMark, 30);                                                       // 向下偏移，放在眼睛下方
+    lv_obj_set_x(ui_ShyMark, -5);
+    lv_obj_add_flag(ui_ShyMark, LV_OBJ_FLAG_HIDDEN);                                    // 初始隐藏
+
     ui_MouthPanel = lv_obj_create(ui_ChatBotPage);
     lv_obj_set_width(ui_MouthPanel, 80);
     lv_obj_set_height(ui_MouthPanel, 80);
     lv_obj_set_x(ui_MouthPanel, 0);
     lv_obj_set_y(ui_MouthPanel, 95);
     lv_obj_set_align(ui_MouthPanel, LV_ALIGN_CENTER);
-    lv_obj_remove_flag(ui_MouthPanel, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);      /// Flags
+    lv_obj_remove_flag(ui_MouthPanel, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_color(ui_MouthPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_MouthPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_MouthPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
