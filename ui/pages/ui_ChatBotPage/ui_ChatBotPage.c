@@ -22,6 +22,8 @@ struct ui_chat_para_t{
     bool anim_complete;
     int idle_random_anim_index;
     int last_state;
+
+    bool touch_active;
 };
 
 struct ui_chat_para_t ui_chat_para = {
@@ -29,6 +31,8 @@ struct ui_chat_para_t ui_chat_para = {
     .anim_complete = true,
     .idle_random_anim_index = 1,
     .last_state = UI_STATE_UNKNOWN,
+
+    .touch_active = false,
 };
 
 static void ui_update_status_label(int state)
@@ -76,13 +80,13 @@ static void ui_update_status_label(int state)
 static void ui_ChatBotPage_Objs_reinit(void)
 {
     lv_anim_delete_all();
-    lv_obj_set_width(ui_EyesPanel, 210);
-    lv_obj_set_height(ui_EyesPanel, 80);
+    lv_obj_set_width(ui_EyesPanel, 300);
+    lv_obj_set_height(ui_EyesPanel, 120);
     lv_obj_set_x(ui_EyesPanel, 0);
     lv_obj_set_y(ui_EyesPanel, -25);
 
-    lv_obj_set_width(ui_EyesVerMovePanel, 210);
-    lv_obj_set_height(ui_EyesVerMovePanel, 80);
+    lv_obj_set_width(ui_EyesVerMovePanel, 300);
+    lv_obj_set_height(ui_EyesVerMovePanel, 120);
     lv_obj_set_x(ui_EyesVerMovePanel, 0);
     lv_obj_set_y(ui_EyesVerMovePanel, 0);
 
@@ -122,6 +126,36 @@ static void _anim_complete_cb(lv_anim_t *anim)
 {
     LV_UNUSED(anim);
     ui_chat_para.anim_complete = true;
+}
+
+// 这是一个触摸动画
+static void update_eyes_by_touch(lv_point_t point)
+{
+    // 获取屏幕分辨率
+    lv_coord_t screen_w = lv_disp_get_hor_res(NULL);
+    lv_coord_t screen_h = lv_disp_get_ver_res(NULL);
+
+    // 计算触摸点相对于屏幕中心的归一化坐标（范围 -1.0 ～ 1.0）
+    float rel_x = (point.x - screen_w / 2.0f) / (screen_w / 2.0f);
+    float rel_y = (point.y - screen_h / 2.0f) / (screen_h / 2.0f);
+
+    // 限制范围，防止越界
+    if (rel_x < -1.0f) rel_x = -1.0f;
+    if (rel_x > 1.0f) rel_x = 1.0f;
+    if (rel_y < -1.0f) rel_y = -1.0f;
+    if (rel_y > 1.0f) rel_y = 1.0f;
+
+    // 最大偏移量（可根据效果调整）
+    const int max_offset_x = 40;
+    const int max_offset_y = 20;
+
+    // 计算最终偏移量（线性映射）
+    int offset_x = (int)(rel_x * max_offset_x);
+    int offset_y = (int)(rel_y * max_offset_y);
+
+    // 移动眼睛容器（EyesVerMovePanel），其默认位置为 (0,0)
+    lv_obj_set_x(ui_EyesVerMovePanel, offset_x);
+    lv_obj_set_y(ui_EyesVerMovePanel, offset_y);
 }
 
 static void _IdleMove1_Animation(void)
@@ -251,16 +285,37 @@ static void _SpeakMove_Animation(void)
 
 }
 
+// 触摸屏交互
 static void ui_event_ChatBotPage(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
 
-    if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_LEFT) {
-        lv_indev_wait_release(lv_indev_active());
+    if (event_code == LV_EVENT_PRESSED) 
+    {
+        lv_anim_delete_all();                                           // 触摸开始：复位所有动画，启动触摸模式
+        ui_ChatBotPage_Objs_reinit();                                   // 让眼睛回到默认位置，准备跟随
+        ui_chat_para.touch_active = true;                               // 进入触摸状态
+
+        lv_point_t point;                                               // 立即根据当前触摸点更新一次位置
+        lv_indev_get_point(lv_indev_active(), &point);
+        update_eyes_by_touch(point);                                    // 触摸使眼睛跟随手指移动
     }
-    if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT) {
-        lv_indev_wait_release(lv_indev_active());
-        ui_ChatBotPage_Objs_reinit();
+    else if (event_code == LV_EVENT_PRESSING) 
+    {
+        if (ui_chat_para.touch_active) 
+        {
+            lv_point_t point;
+            lv_indev_get_point(lv_indev_active(), &point);
+            update_eyes_by_touch(point);
+        }
+    }
+    else if (event_code == LV_EVENT_RELEASED || event_code == LV_EVENT_PRESS_LOST) 
+    {
+        if (ui_chat_para.touch_active) 
+        {
+            ui_chat_para.touch_active = false;
+            ui_ChatBotPage_Objs_reinit();
+        }
     }
 }
 
@@ -276,6 +331,11 @@ static void _ChatBotTimer_cb(lv_timer_t *timer)
     if (ipc_get_latest_message(message_buffer, sizeof(message_buffer)))
     {
         lv_label_set_text(ui_SubtitleLabel, message_buffer);
+    }
+
+    if (ui_chat_para.touch_active) 
+    {
+        return;
     }
 
     int state = ipc_get_state();
@@ -336,8 +396,10 @@ void ui_ChatBotPage_init(void)
     ui_chat_para.first_enter = true;
     lv_obj_t * ui_ChatBotPage = lv_obj_create(NULL);
     lv_obj_remove_flag(ui_ChatBotPage, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(ui_ChatBotPage, LV_OBJ_FLAG_OVERFLOW_VISIBLE);      // 解决眼睛移动时被遮挡的问题
+    ui_EyesPanel = lv_obj_create(ui_ChatBotPage);                       
+    lv_obj_add_flag(ui_EyesPanel, LV_OBJ_FLAG_OVERFLOW_VISIBLE);        // 解决眼睛移动时被遮挡的问题
 
-    ui_EyesPanel = lv_obj_create(ui_ChatBotPage);
     lv_obj_set_width(ui_EyesPanel, 210);
     lv_obj_set_height(ui_EyesPanel, 80);
     lv_obj_set_x(ui_EyesPanel, 0);
@@ -348,8 +410,9 @@ void ui_ChatBotPage_init(void)
     lv_obj_set_style_bg_opa(ui_EyesPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_EyesPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(ui_EyesPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_EyesVerMovePanel = lv_obj_create(ui_EyesPanel);                 // 解决眼睛移动时被遮挡的问题
+    lv_obj_add_flag(ui_EyesVerMovePanel, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
-    ui_EyesVerMovePanel = lv_obj_create(ui_EyesPanel);
     lv_obj_set_width(ui_EyesVerMovePanel, 210);
     lv_obj_set_height(ui_EyesVerMovePanel, 80);
     lv_obj_set_align(ui_EyesVerMovePanel, LV_ALIGN_CENTER);
